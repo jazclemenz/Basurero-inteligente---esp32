@@ -1,39 +1,48 @@
 import time
-from machine import Pin, PWM, I2C
+import machine
 import config
-from lcd_api import LcdApi
-from i2c_lcd import I2cLcd
 from ble_service import BasureroBLE
+
+# Importa el controlador LCD que tengas en tu ESP32 (machine_i2c_lcd o i2c_lcd)
+try:
+    from machine_i2c_lcd import I2cLcd
+except ImportError:
+    from i2c_lcd import I2cLcd
+
 
 class BasureroApp:
     def __init__(self):
-        # 1. Periféricos desde config
-        self.pir = Pin(config.PIN_PIR, Pin.IN)[cite: 8]
-        self.trig = Pin(config.PIN_TRIG, Pin.OUT)
-        self.echo = Pin(config.PIN_ECHO, Pin.IN)
-        self.servo = PWM(Pin(config.PIN_SERVO), freq=50)
-        self.led_verde = Pin(config.PIN_LED_VERDE, Pin.OUT)
-        self.led_rojo = Pin(config.PIN_LED_ROJO, Pin.OUT)
-        self.buzzer = Pin(config.PIN_BUZZER, Pin.OUT)
+        print("--- INICIANDO SISTEMA: BASURERO INTELIGENTE ---")
 
-        # 2. Pantalla LCD
-        i2c = I2C(0, scl=Pin(config.PIN_SCL), sda=Pin(config.PIN_SDA), freq=400000)[cite: 8]
-        self.lcd = I2cLcd(i2c, config.LCD_ADDR, 2, 16)[cite: 8]
+        # 1. Configuración de Hardware
+        self.led_rojo = machine.Pin(config.PIN_LED_ROJO, machine.Pin.OUT)
+        self.led_verde = machine.Pin(config.PIN_LED_VERDE, machine.Pin.OUT)
+        
+        self.buzzer = machine.PWM(machine.Pin(config.PIN_BUZZER))
+        self.buzzer.duty(0)
 
-        # 3. Módulo Bluetooth
-        self.ble = BasureroBLE()
-        self.ultimo_envio_ble = 0
+        self.trig = machine.Pin(config.PIN_TRIG, machine.Pin.OUT)
+        self.echo = machine.Pin(config.PIN_ECHO, machine.Pin.IN)
+        self.pir = machine.Pin(config.PIN_PIR, machine.Pin.IN)
+        
+        self.servo = machine.PWM(machine.Pin(config.PIN_SERVO), freq=50)
+
+        # 2. Pantalla LCD con SoftI2C
+        i2c = machine.SoftI2C(
+            sda=machine.Pin(config.PIN_SDA), 
+            scl=machine.Pin(config.PIN_SCL)
+        )
+        self.lcd = I2cLcd(i2c, config.LCD_ADDR, config.LCD_ROWS, config.LCD_COLS)
+
+        # 3. Servicio Bluetooth
+        self.bt = BasureroBLE()
+
+        # Variable de control de estado (-1 = inicial, 0 = disponible, 1 = lleno)
+        self.estado_actual = -1
 
     def mover_servo(self, angulo):
-        ancho_pulso = int(40 + (angulo / 180) * 75)
-        self.servo.duty(ancho_pulso)
-
-    def sonar_buzzer(self, veces, duracion):
-        for _ in range(veces):
-            self.buzzer.value(1)
-            time.sleep(duracion)
-            self.buzzer.value(0)
-            time.sleep(duracion)
+        duty = int(((angulo / 180.0) * 75) + 40)
+        self.servo.duty(duty)
 
     def medir_distancia(self):
         self.trig.value(0)
@@ -42,67 +51,91 @@ class BasureroApp:
         time.sleep_us(10)
         self.trig.value(0)
         
-        inicio = time.ticks_us()
-        timeout = time.ticks_add(inicio, 30000)
-        while self.echo.value() == 0:
-            inicio = time.ticks_us()
-            if time.ticks_diff(time.ticks_us(), timeout) > 0:
-                return 999
-        while self.echo.value() == 1:
-            fin = time.ticks_us()
-            if time.ticks_diff(time.ticks_us(), timeout) > 0:
-                return 999
-            
-        duracion = time.ticks_diff(fin, inicio)
-        return (duracion * 0.0343) / 2
+        # Medición con time_pulse_us
+        duracion = machine.time_pulse_us(self.echo, 1, 30000)
+        if duracion <= 0:
+            return 999
+        return (duracion * 0.034) / 2
 
-    def accionar_compuerta(self, origen="Sensor"):
+    def mostrar_disponible(self):
         self.lcd.clear()
-        self.lcd.putstr(f"{origen}\nAbriendo...")
-        self.led_verde.value(0)
+        self.lcd.move_to(4, 0)
+        self.lcd.putstr("RECICLABLES")
+        self.lcd.move_to(0, 1)
+        self.lcd.putstr("> Papel y Carton")
+        self.lcd.move_to(0, 2)
+        self.lcd.putstr("> Plastico y Vidrios")
+        self.lcd.move_to(0, 3)
+        self.lcd.putstr("> Latas y Metal")
+
+    def mostrar_lleno(self):
+        self.lcd.clear()
+        self.lcd.move_to(0, 1)
+        self.lcd.putstr("  CONTENEDOR LLENO  ")
+        self.lcd.move_to(0, 2)
+        self.lcd.putstr(" Dirijase a otro por favor ")
+
+    def estado_lleno_visual(self):
         self.led_rojo.value(1)
-        self.sonar_buzzer(1, 0.1)
+        self.led_verde.value(0)
+        self.buzzer.duty(0)
 
-        self.mover_servo(90)
-        time.sleep(config.TIEMPO_TAPA_ABIERTA_S)
-
-        self.lcd.clear()
-        self.lcd.putstr("Cerrando...")
-        self.mover_servo(0)
+    def estado_normal(self):
         self.led_rojo.value(0)
         self.led_verde.value(1)
-        self.sonar_buzzer(2, 0.1)
+        self.buzzer.duty(0)
 
-        self.lcd.clear()
-        self.lcd.putstr("Sistema Listo\nEsperando...")
+    def inicializar_sistema(self):
+        self.mover_servo(0)
+        print(f"Calibrando sensor PIR... Espera {config.TIEMPO_CALIBRACION_PIR_S} segundos.")
+        time.sleep(config.TIEMPO_CALIBRACION_PIR_S)
+        print("¡Sistema listo!")
 
     def run(self):
-        print("Iniciando sistema de Basurero Inteligente...")
-        self.mover_servo(0)
-        self.led_verde.value(1)
-        self.led_rojo.value(0)
-        self.lcd.clear()
-        self.lcd.putstr("Sistema Listo\nEsperando...")
+        self.inicializar_sistema()
 
         while True:
-            ahora = time.ticks_ms()
             distancia = self.medir_distancia()
+            presencia = self.pir.value()
 
-            # Enviar telemetría a la app
-            if time.ticks_diff(ahora, self.ultimo_envio_ble) > config.INTERVALO_ENVIO_BLE_MS:
-                self.ble.enviar_nivel(distancia)
-                self.ultimo_envio_ble = ahora
+            # --- ESTADO 1: CONTENEDOR LLENO (< 10 cm) ---
+            if distancia < config.UMBRAL_LLENO_CM:
+                if self.estado_actual != 1:
+                    self.estado_lleno_visual()
+                    self.mostrar_lleno()
+                    self.bt.enviar("1")
+                    print("ESTADO: LLENO (Bluetooth: 1)")
+                    self.estado_actual = 1
 
-            # Apertura remota desde App
-            if self.ble.comando_recibido == "1":
-                self.accionar_compuerta(origen="Orden App")[cite: 1, 4]
-                self.ble.comando_recibido = None
+                self.mover_servo(0)  # Tapa bloqueada
 
-            # Apertura física por proximidad
-            elif distancia < config.DISTANCIA_DETECCION_CM or self.pir.value() == 1:[cite: 8]
-                self.accionar_compuerta(origen="Presencia")[cite: 8]
+                # Alarma si una persona intenta acercarse cuando está lleno
+                if presencia == 1:
+                    print("Aviso sonoro: Persona intentando usar basurero lleno")
+                    self.buzzer.freq(1000)
+                    self.buzzer.duty(512)
+                    time.sleep(1)
+                    self.buzzer.duty(0)
+                    time.sleep(3)
 
-            time.sleep(0.1)
+            # --- ESTADO 0: CONTENEDOR DISPONIBLE (>= 10 cm) ---
+            else:
+                if self.estado_actual != 0:
+                    self.estado_normal()
+                    self.mostrar_disponible()
+                    self.bt.enviar("0")
+                    print("ESTADO: DISPONIBLE (Bluetooth: 0)")
+                    self.estado_actual = 0
+
+                # Apertura por aproximación del usuario
+                if presencia == 1:
+                    print("Usuario detectado - Abriendo tapa")
+                    self.mover_servo(90)
+                    time.sleep(config.TIEMPO_TAPA_ABIERTA_S)
+                    self.mover_servo(0)
+
+            time.sleep(0.5)
+
 
 if __name__ == "__main__":
     app = BasureroApp()
