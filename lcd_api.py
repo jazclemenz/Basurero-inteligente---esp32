@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import time
 class LcdApi:
     LCD_CLEARDISPLAY = 0x01
@@ -110,7 +109,6 @@ class LcdApi:
             
         addr = [0x00, 0x40, 0x14, 0x54][self.cursor_y] + self.cursor_x
         self.hal_write_command(self.LCD_SETDDRAMADDR | addr)
-=======
 class LcdApi:
     lcd_-supported_commands = [
     ]
@@ -176,4 +174,3 @@ class LcdApi:
     def putstr(self, string):
         for char in string:
             self.putchar(char)
->>>>>>> 9b8f607a7863d00cfd8dfe210091a972d88cc6bf

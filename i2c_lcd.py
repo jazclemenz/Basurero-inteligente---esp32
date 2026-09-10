@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from lcd_api import LcdApi
 import time
 
@@ -91,7 +90,6 @@ class I2cLcd(LcdApi):
 
     def hal_sleep_ms(self, ms):
         time.sleep_ms(ms)
-=======
 from lcd_api import LcdApi
 import time
 
@@ -181,4 +179,3 @@ class I2cLcd(LcdApi):
 
     def impl_write_char(self, char_val):
         self.hal_write_data(char_val)
->>>>>>> 9b8f607a7863d00cfd8dfe210091a972d88cc6bf
