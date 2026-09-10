@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WasteWise - Dashboard</title>
+  <link rel="icon" type="image/jpeg" href="icon.jpg">
+  
+  <style>
+    :root {
+      --primary: #0ea5e9;
+      --primary-hover: #0284c7;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--text-main);
+    }
+
+    .screen {
+      width: 100%;
+      max-width: 420px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .container {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* --- DASHBOARD STYLES --- */
+    .header {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: #ffffff;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px auto;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    .dash-title {
+      color: var(--text-main);
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .dash-subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 400;
+    }
+
+    .btn-connect {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      width: 100%;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 25px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 20px -10px var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .btn-connect:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 15px 25px -10px var(--primary);
+    }
+
+    .btn-connect.connected {
+       background: var(--danger);
+       box-shadow: 0 10px 20px -10px var(--danger);
+    }
+    
+    .btn-connect.connected:hover {
+       background: #dc2626;
+    }
+
+    .btn-connect:active, .btn-action:not(:disabled):active {
+      transform: translateY(1px);
+    }
+
+    .status-badge {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--danger);
+      margin-bottom: 30px;
+      background: #fee2e2;
+      padding: 8px 20px;
+      border-radius: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.connected {
+      color: var(--success);
+      background: #d1fae5;
+    }
+
+    .status-badge.connecting {
+      color: var(--warning);
+      background: #fef3c7;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    
+    .connected .status-dot {
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .control-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      width: 100%;
+      padding: 25px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    }
+
+    .control-title {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .btn-action {
+      background-color: #0f172a;
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      width: 100%;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-action:hover:not(:disabled) {
+      background-color: #1e293b;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 15px -5px rgba(15, 23, 42, 0.3);
+    }
+
+    .btn-action:disabled {
+      background-color: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .telemetry-card {
+      margin-top: 10px;
+      width: 100%;
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid #f1f5f9;
+    }
+
+    .telemetry-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PANTALLA DE DASHBOARD -->
+  <div id="dashboardScreen" class="screen">
+    <div class="container">
+      
+      <div class="header">
+        <div class="logo">
+          <!-- Basurero marrón -->
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Tapa -->
+            <path d="M7 6L8 3H16L17 6" fill="#A1887F" stroke="#5D4037" stroke-width="1.5" stroke-linejoin="round"/>
+            <!-- Borde de la tapa -->
+            <path d="M3 6H21" stroke="#5D4037" stroke-width="2" stroke-linecap="round"/>
+            <!-- Cuerpo del basurero -->
+            <path d="M5 6H19L17.5 21H6.5L5 6Z" fill="#8D6E63" stroke="#5D4037" stroke-width="1.5" stroke-linejoin="round"/>
+            <!-- Líneas del basurero -->
+            <path d="M9 10V17" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M15 10V17" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M12 10V17" stroke="#5D4037" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="dash-title">WasteWise</div>
+        <div class="dash-subtitle">Gestión Inteligente de Residuos</div>
+      </div>
+      
+      <button id="btnConnect" class="btn-connect">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M12 2l4.5 4.5M12 22l-4.5-4.5M12 12l4.5-4.5M12 12l-4.5 4.5"/></svg>
+        <span>CONECTAR BASURERO</span>
+      </button>
+      
+      <div id="connStatusText" class="status-badge">
+        <div class="status-dot"></div>
+        <span>Desconectado</span>
+      </div>
+      
+      <div class="control-box">
+        <div class="control-title">Control Manual</div>
+        
+        <button id="btnOpen" class="btn-action" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          ABRIR COMPUERTA
+        </button>
+        <button id="btnClose" class="btn-action" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 16l-5 5-5-5M12 21V9"/></svg>
+          CERRAR COMPUERTA
+        </button>
+        
+        <div class="telemetry-card">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span id="valCapacity" class="telemetry-text">Esperando datos...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- LÓGICA BLE ---
+    const BLE_CONFIG = {
+      deviceName: "Basurero_UNRaf",
+      serviceUuid: "6e400001-b5a3-f393-e0a9-e50e24dcca9e",
+      rxUuid:      "6e400002-b5a3-f393-e0a9-e50e24dcca9e", 
+      txUuid:      "6e400003-b5a3-f393-e0a9-e50e24dcca9e"  
+    };
+
+    const btnConnect = document.getElementById("btnConnect");
+    const btnConnectText = btnConnect.querySelector("span");
+    const connStatusText = document.getElementById("connStatusText");
+    const connStatusSpan = connStatusText.querySelector("span");
+    const btnOpen = document.getElementById("btnOpen");
+    const btnClose = document.getElementById("btnClose");
+    const valCapacity = document.getElementById("valCapacity");
+
+    let bleDevice = null;
+    let gattServer = null;
+    let rxCharacteristic = null;
+    let txCharacteristic = null;
+    let isConnected = false;
+    let inMaintenanceMode = false;
+
+    btnConnect.addEventListener("click", async () => {
+      if (isConnected) {
+        disconnectDevice();
+      } else {
+        await connectDevice();
+      }
+    });
+
+    async function connectDevice() {
+      if (!navigator.bluetooth) {
+        alert("Tu navegador no soporta Web Bluetooth API.");
+        return;
+      }
+
+      try {
+        setConnectionState("connecting");
+
+        const requestOptions = {
+          filters: [
+            { name: BLE_CONFIG.deviceName },
+            { namePrefix: "Basurero" }
+          ],
+          optionalServices: [BLE_CONFIG.serviceUuid]
+        };
+
+        bleDevice = await navigator.bluetooth.requestDevice(requestOptions);
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+        gattServer = await bleDevice.gatt.connect();
+
+        const service = await gattServer.getPrimaryService(BLE_CONFIG.serviceUuid);
+        rxCharacteristic = await service.getCharacteristic(BLE_CONFIG.rxUuid);
+
+        try {
+          txCharacteristic = await service.getCharacteristic(BLE_CONFIG.txUuid);
+          await txCharacteristic.startNotifications();
+          txCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetryNotification);
+        } catch (txErr) {
+          console.warn("TX not available", txErr);
+        }
+
+        setConnectionState("connected");
+        enableControls(true);
+        updateOperationalView();
+
+      } catch (err) {
+        console.error("Error BLE:", err);
+        setConnectionState("disconnected");
+        if (err.name !== "NotFoundError" && !err.message.includes("cancelled")) {
+          alert("Error de conexión: " + err.message);
+        }
+      }
+    }
+
+    function disconnectDevice() {
+      if (bleDevice && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+      } else {
+        onDisconnected();
+      }
+    }
+
+    function onDisconnected() {
+      setConnectionState("disconnected");
+      enableControls(false);
+      valCapacity.textContent = "Esperando datos...";
+      inMaintenanceMode = false;
+    }
+
+    function setConnectionState(state) {
+      if (state === "connected") {
+        isConnected = true;
+        btnConnect.classList.add("connected");
+        btnConnectText.textContent = "DESCONECTAR BASURERO";
+        connStatusText.className = "status-badge connected";
+        connStatusSpan.textContent = "Conectado";
+      } else if (state === "connecting") {
+        isConnected = false;
+        btnConnect.classList.remove("connected");
+        btnConnectText.textContent = "CONECTANDO...";
+        connStatusText.className = "status-badge connecting";
+        connStatusSpan.textContent = "Conectando...";
+      } else {
+        isConnected = false;
+        btnConnect.classList.remove("connected");
+        btnConnectText.textContent = "CONECTAR BASURERO";
+        connStatusText.className = "status-badge";
+        connStatusSpan.textContent = "Desconectado";
+      }
+    }
+
+    function enableControls(enable) {
+      if (!enable) {
+        btnOpen.disabled = true;
+        btnClose.disabled = true;
+      } else {
+        updateOperationalView();
+      }
+    }
+
+    // Comandos BLE
+    btnOpen.addEventListener("click", async () => {
+      await sendCommand("1");
+      inMaintenanceMode = true;
+      updateOperationalView();
+    });
+
+    btnClose.addEventListener("click", async () => {
+      await sendCommand("0");
+      inMaintenanceMode = false;
+      updateOperationalView();
+    });
+
+    async function sendCommand(cmd) {
+      if (!rxCharacteristic) return;
+      try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(cmd);
+        if (rxCharacteristic.writeValueWithoutResponse) {
+          await rxCharacteristic.writeValueWithoutResponse(data);
+        } else if (rxCharacteristic.writeValueWithResponse) {
+          await rxCharacteristic.writeValueWithResponse(data);
+        } else {
+          await rxCharacteristic.writeValue(data);
+        }
+      } catch (err) {
+        console.error("Error al escribir BLE:", err);
+        alert("Error al enviar comando: " + err.message);
+      }
+    }
+
+    function updateOperationalView() {
+      if (!isConnected) return;
+      if (inMaintenanceMode) {
+        btnOpen.disabled = true;
+        btnClose.disabled = false;
+        valCapacity.textContent = "Mantenimiento (Sensores pausados)";
+      } else {
+        btnOpen.disabled = false;
+        btnClose.disabled = true;
+        valCapacity.textContent = "Estado: Automático";
+      }
+    }
+
+    // Telemetría
+    function handleTelemetryNotification(event) {
+      const decoder = new TextDecoder("utf-8");
+      const rawText = decoder.decode(event.target.value).trim();
+      
+      if (inMaintenanceMode) return; // Ignorar telemetría si está en mantenimiento
+      
+      if (rawText === "1") {
+        valCapacity.textContent = "Nivel: LLENO";
+      } else if (rawText === "0") {
+        valCapacity.textContent = "Nivel: DISPONIBLE";
+      } else {
+        valCapacity.textContent = "Nivel: " + rawText;
+      }
+    }
+  </script>
+</body>
+</html>
