@@ -5,7 +5,7 @@ DEVICE_NAME = "Basurero_UNRaf"
 
 # --- Pines de Sensores ---
 PIN_PIR = 19         # Sensor PIR
-PIN_TRIG = 5         # HC-SR04 Trigger
+PIN_TRIG = 17         # HC-SR04 Trigger
 PIN_ECHO = 18        # HC-SR04 Echo
 
 # --- Pines I2C (Pantalla LCD 20x4) ---
@@ -16,10 +16,10 @@ LCD_ROWS = 4         # 4 Filas
 LCD_COLS = 20        # 20 Columnas
 
 # --- Pines de Actuadores y Señalización ---
-PIN_SERVO = 15       # Servomotor
-PIN_LED_VERDE = 12   # LED Verde
+PIN_SERVO = 4       # Servomotor
+PIN_LED_VERDE = 14   # LED Verde
 PIN_LED_ROJO = 13    # LED Rojo
-PIN_BUZZER = 14      # Buzzer con PWM
+PIN_BUZZER = 32      # Buzzer con PWM
 
 # --- Parámetros de Operación ---
 UMBRAL_LLENO_CM = 10         # Si la distancia es menor a 10 cm, está lleno
